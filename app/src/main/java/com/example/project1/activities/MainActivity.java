@@ -2,11 +2,14 @@ package com.example.project1.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
@@ -16,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.project1.R;
 import com.example.project1.helper.DBHelper;
+import com.example.project1.network.NetworkChangeReceiver;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.regex.Pattern;
@@ -26,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
 
     Button signup, signin, btnTryAgain;
     DBHelper DB;
+    private BroadcastReceiver broadcastReceiver;
+
 
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^" +
@@ -47,9 +53,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTheme(R.style.Theme_ProjeTheme);
-
         setContentView(R.layout.activity_main);
 
+        broadcastReceiver = new NetworkChangeReceiver();
+        registerNetworkBroadcastReciver();
         init();
 
 
@@ -75,6 +82,31 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+
+    // receiver
+
+    protected void registerNetworkBroadcastReciver() {
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.N){
+            registerReceiver(broadcastReceiver,new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        }
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.M){
+            registerReceiver(broadcastReceiver,new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        }
+    }
+    protected void unregisterNetwork(){
+        try{
+            unregisterReceiver(broadcastReceiver);
+        }catch (IllegalArgumentException e){
+            e.printStackTrace();
+        }
+    }
+    protected void onDestroy(){
+        super.onDestroy();
+        unregisterNetwork();
+    }
+
+    // receiver end
+
 
     public void signUp(View view) {
         String user = username.getEditText().getText().toString();
